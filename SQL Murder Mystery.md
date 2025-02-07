@@ -48,9 +48,9 @@ Now we can see the fields where we can plug in our clues to help us narrow down 
 ```` sql
 SELECT *
 FROM crime_scene_report
-WHERE type = 'murder'
+WHERE LOWER(type) = 'murder'
   AND date = '20180115'
-  AND city = 'SQL City';
+  AND LOWER(city) = 'sql city';
 ````
 
 ![image](https://github.com/user-attachments/assets/9a3cafe5-fc1c-4d32-853b-985b9ca31fa3)
@@ -83,7 +83,7 @@ The query searches for witnesses living on Northwestern Drive and orders the res
 
 ![image](https://github.com/user-attachments/assets/61ef9a4b-3fe7-4313-a135-049860644ca4)
 
-   - Witness #1:** Morty Schapiro** with **id** 14887, **license_id** 118009, and **ssn** 111564949.
+   - Witness #1: **Morty Schapiro** with **id** 14887, **license_id** 118009, and **ssn** 111564949.
    - Witness #2: The second witness, **Annabel, lives somewhere on "Franklin Ave**.
 
 ## 4. Following the lead pt. 2 🕵️‍♂️
@@ -99,14 +99,146 @@ WHERE name LIKE '%Annabel%'
 
 ![image](https://github.com/user-attachments/assets/ca963004-639d-41d9-bbc0-e2999c4226aa)
 
-  - Witness #1:**Morty Schapiro** with **id** 14887, **license_id** 118009, and **ssn** 111564949.
-  - Witness #2:**Annabel Miller** with **id** 16371, **license_id** 490173, and **ssn** 318771143.
+  - Witness #1: **Morty Schapiro** with **id** 14887, **license_id** 118009, and **ssn** 111564949.
+  - Witness #2: **Annabel Miller** with **id** 16371, **license_id** 490173, and **ssn** 318771143.
 
 ## 5. Interrogating the Witnesses ✍
 
 With our witnesses identified, it’s time to review their statements. What did they see? Who was there? Are their stories airtight, or do we have contradictions to unravel?
-By examining their testimonies in the database, we’ll extract key details that could expose our suspect—or lead us deeper into the mystery. Every word matters, and the truth is waiting to be uncovered.
-Let’s dive into the witness interviews and see where the evidence takes us! 
+By examining their testimonies in the database, we’ll extract key details that could expose our suspect—or lead us deeper into the mystery. 
 
+We will use the SELECT * statement with IN operator to search our interview table and retrieve the interviews from our witnesses using their person_id:
 
+```` sql
+SELECT *
+FROM interview
+WHERE person_id IN ('14887', '16371');
+````
 
+An alternative more advanced solution would be to use JOIN to get the transcripts instead:
+
+```` sql
+SELECT person.name, interview.transcript
+FROM person
+JOIN interview
+ON person.id = interview.person_id
+WHERE person.id = 14887 OR person.id = 16371;
+````
+
+![image](https://github.com/user-attachments/assets/3cce2078-bf0d-4696-ac84-9c9c3d3dd018)
+
+Here are the transcripts from our witnesses:
+
+  - I heard a gunshot and then saw a man run out. He had a **"Get Fit Now Gym" bag**. The membership number on the bag started with **"48Z"**. Only **gold members** have those bags. The man got into a car with a plate that included **"H42W"**.
+  - I saw the murder happen, and I recognized the killer from my gym when I was working out last week on **January the 9th**.
+
+From this we get new clues about the crime:
+
+  - A man
+  - Gold member of "Get Fit Now Gym" with a membership no. starting with "48Z"
+  - Spotted at the gym on 9 January
+  - Car plate number containing "H42W"
+
+## 6. Finding the murderer 🕵️‍♂️
+
+With our current clues we could slowly follow the trail of details to find our murder suspect by checking each indentifier, but we could instead pinpoint our suspect with a single SQL query that combines all the identifiers and give us a suspect that meets all of them. For complex questions that simultaneously require data from multiple different tables, we will be using JOIN statements, it helps us to consider data by joining different tables into a single table.
+ 
+```` sql
+SELECT 	person.name, get_fit_now_member.membership_status, 
+		    get_fit_now_check_in.check_in_date, get_fit_now_check_in.membership_id,
+		    drivers_license.plate_number
+FROM person 
+JOIN get_fit_now_member
+ON get_fit_now_member.person_id = person.id
+JOIN get_fit_now_check_in
+ON get_fit_now_check_in.membership_id = get_fit_now_member.id
+JOIN drivers_license
+ON drivers_license.id = person.license_id
+WHERE get_fit_now_check_in.membership_id LIKE '48Z%'
+	AND get_fit_now_check_in.check_in_date = '20180109'
+	AND get_fit_now_member.membership_status = 'gold'
+	AND drivers_license.plate_number LIKE '%H42W%';
+````
+
+![image](https://github.com/user-attachments/assets/3bcfa37e-1f51-4344-98b6-af9092a65c33)
+
+We have found the murderer... it's **Jeremy Bowers**!
+
+## 7. Submitting our report 📌
+
+Now let us hand over our report to the detective by updating the database with our main suspect, Jeremy Bowers.
+
+```` sql
+INSERT INTO solution VALUES(1, 'Jeremy Bowers');
+
+SELECT value
+FROM solution;
+````
+
+![image](https://github.com/user-attachments/assets/84e7647b-8b53-40b6-9b78-127ecf4ef236)
+
+Congrats, you found the murderer! But wait, there's more... **If you think you're up for a challenge, try querying the interview transcript of the murderer to find the real villain behind this crime. If you feel especially confident in your SQL skills, try to complete this final step with no more than 2 queries.** Use this same INSERT statement with your new suspect to check your answer.
+
+Hold on, there's more...
+
+## 8. Who is the mastermind? 🧠
+
+Let us first analyze what our murderer has to say:
+
+```` sql
+SELECT interview.transcript
+FROM interview JOIN person
+ON interview.person_id = person.id
+WHERE person.name = 'Jeremy Bowers';
+````
+
+![image](https://github.com/user-attachments/assets/b1388889-3879-4643-b060-de86ecff98fd)
+
+Murderer's interview:
+
+_I was hired by a woman with a lot of money. I don't know her name but I know she's around **5'5" (65") or 5'7" (67")**. She has **red hair** and she drives a **Tesla Model S**. I know that she attended the **SQL Symphony Concert 3 times in December 2017**._
+
+Here is our clues about our mastermind:
+  
+  - The mastermind is a female with red hair, approximately 5'5" (65") or 5'7" (67") tall
+  - She drives a Tesla Model S
+  - She attended the SQL Symphony Concert 3 times in December 2017
+
+What an interesting turn of events... 🤔
+
+With one last query, we shall determine exactly who our mastermind just like how we found our murderer.
+
+```` sql
+SELECT 	person.name, drivers_license.*
+FROM person 
+JOIN drivers_license
+ON drivers_license.id = person.license_id
+JOIN facebook_event_checkin
+ON facebook_event_checkin.person_id = person.id
+WHERE drivers_license.gender = 'female'
+	AND drivers_license.height BETWEEN 65 AND 67
+	AND drivers_license.hair_color = 'red'
+	AND drivers_license.car_make = 'Tesla'
+	AND drivers_license.car_model = 'Model S'
+	AND facebook_event_checkin.date LIKE '201712%'
+GROUP BY facebook_event_checkin.event_name
+HAVING COUNT(LOWER(facebook_event_checkin.event_name) = 'sql symphony concert') > 1
+ORDER BY facebook_event_checkin.event_name;
+````
+
+![image](https://github.com/user-attachments/assets/c4320b11-bb0c-4e39-b6c2-899c41297432)
+
+We have found the true mastermind! It was Miranda Priestly all along. Now let's verify this by putting her name into the database.
+
+```` sql
+INSERT INTO solution VALUES (1, 'Miranda Priestly');
+
+SELECT value
+FROM solution;
+````
+
+![image](https://github.com/user-attachments/assets/cdc8ac60-7de2-4bc3-b13c-d89af819eb9f)
+
+_Congrats, you found the brains behind the murder! Everyone in SQL City hails you as the greatest SQL detective of all time. Time to break out the champagne!_
+
+Elementary, my dear Watson.
