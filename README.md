@@ -4,4 +4,7 @@
 
 This is where I keep my SQL projects.
 
-## Table of Contents
+## Table of Contents 📚
+  - SQL Murder Mystery
+  - 8 Week SQL Challenges
+  - Data cleaning and exploratory analysis on layoffs dataset
