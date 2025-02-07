@@ -23,7 +23,26 @@ From this we get very important clues 🧩 that will be crucial to help us find 
 
 <img width="1008" alt="Screenshot 2024-03-25 at 12 12 38 PM" src="https://github.com/user-attachments/assets/27256018-3e85-4e61-adb3-fb07051a0ec8" />
 
-
 Before cracking the case, every great detective studies the crime scene—and in this investigation, the **Entity-Relationship Diagram (ERD)** is my map to the truth. This blueprint reveals the key tables, their connections, and the crucial evidence hidden within the database.
 
 By analyzing the structure, I can pinpoint the most relevant records, trace relationships between suspects and events, and uncover where the real clues might be buried. A well-planned investigation is the key to solving any mystery, and this step ensures that no detail slips through the cracks.
+
+## Crime Scene Report
+
+Our first step would be to start at the crime scene report table. We'll use a simple SELECT * statement to view the contents of the table:
+
+```` sql
+SELECT *
+FROM crime_scene_report
+LIMIT 5;
+````
+![image](https://github.com/user-attachments/assets/781c9829-98a1-4bb2-a820-ccba5661ae90)
+
+
+
+
+
+
+
+
+
